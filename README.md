@@ -23,7 +23,7 @@ The framework consists of three analysis components and one validation step:
 | 🔬 **Functional Localization** | *Where* do vision/reasoning abilities reside? | Causal probing across transformer depth | `localization_vision.py`, `localization_reasoning.py` |
 | 📊 **Update Characterization** | *What* does RL change structurally? | SVD spectral analysis & Frobenius norm comparison | `characterisation_diversity.py`, `characterisation_energy.py` |
 | 🧩 **Transferability Test** | Are RL updates *transferable*? | Block-wise model merging | `transferability_test.py` |
-| ❄️ **Necessity Validation** | Are mid-late layer updates *necessary*? | Block-wise parameter freezing during RL | *(external training script)* |
+| ❄️ **Necessity Validation** | Are mid-late layer updates *necessary*? | Block-wise parameter freezing during RL | [OpenMMReasoner](https://github.com/EvolvingLMMs-Lab/OpenMMReasoner) |
 
 ## 🤖 Supported Training Recipes
 
