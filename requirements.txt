@@ -1,0 +1,15 @@
+torch
+transformers==4.51.3
+pillow
+accelerate
+datasets
+numpy
+tqdm
+matplotlib
+seaborn
+pandas
+
+# Optional: needed for GPT-based grading in transferability_test
+openai
+# Optional: needed for math answer verification
+math_verify
