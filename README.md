@@ -135,10 +135,14 @@ results/
 ## 📝 Citation
 
 ```bibtex
-@article{frankenstein2025,
-  title   = {What Does Reinforcement Learning Really Change in Visual Reasoning?},
-  author  = {},
-  year    = {2025}
+@misc{li2026doesrlimprovevisual,
+      title={What does RL improve for Visual Reasoning? A Frankenstein-Style Analysis}, 
+      author={Xirui Li and Ming Li and Tianyi Zhou},
+      year={2026},
+      eprint={2602.12395},
+      archivePrefix={arXiv},
+      primaryClass={cs.CV},
+      url={https://arxiv.org/abs/2602.12395}, 
 }
 ```
 
