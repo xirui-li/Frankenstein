@@ -498,6 +498,10 @@ class EvalConfig:
     # Experiment type: 'v1' (general) or 'v2' (finer splits)
     experiment_type: str = "v2"
 
+    # Custom layer cuts for three-way partition (e.g. [8, 20] for 0-7 | 8-19 | 20-27)
+    # If None, defaults to n_layers//3 and 2*n_layers//3
+    layer_cuts: Optional[List[int]] = None
+
 
 # ============================================================================
 # System Prompts
@@ -1498,8 +1502,11 @@ class ModelManager:
             late_layers = self._get_layers(late_model)
 
             n_layers = len(early_layers)
-            cut1 = n_layers // 3
-            cut2 = 2 * n_layers // 3
+            if self.config.layer_cuts is not None:
+                cut1, cut2 = self.config.layer_cuts[0], self.config.layer_cuts[1]
+            else:
+                cut1 = n_layers // 3
+                cut2 = 2 * n_layers // 3
 
             print(f"    Total layers: {n_layers}, cut1: {cut1}, cut2: {cut2}")
 
@@ -1551,7 +1558,11 @@ class ModelManager:
 
             early_layers = self._get_layers(early_model)
             late_layers = self._get_layers(late_model)
-            cut = early_frac * len(early_layers) // 3
+            if self.config.layer_cuts is not None:
+                # early_frac=1 → cut at layer_cuts[0], early_frac=2 → cut at layer_cuts[1]
+                cut = self.config.layer_cuts[0] if early_frac == 1 else self.config.layer_cuts[1]
+            else:
+                cut = early_frac * len(early_layers) // 3
 
             with torch.no_grad():
                 for i in range(cut, len(early_layers)):
@@ -1698,14 +1709,17 @@ class ModelManager:
             base_layers = self._get_layers(base_model)
             donor_layers = self._get_layers(donor_model)
             n = len(base_layers)
-            third = n // 3
+            if self.config.layer_cuts is not None:
+                c1, c2 = self.config.layer_cuts[0], self.config.layer_cuts[1]
+            else:
+                c1, c2 = n // 3, 2 * n // 3
 
             if segment == "early":
-                start, end = 0, third
+                start, end = 0, c1
             elif segment == "middle":
-                start, end = third, 2 * third
+                start, end = c1, c2
             else:
-                start, end = 2 * third, n
+                start, end = c2, n
 
             with torch.no_grad():
                 for i in range(start, end):
@@ -2312,7 +2326,7 @@ def run_experiment(config: EvalConfig):
         for model_name in config.models:
             row = {}
             for exp_name, exp_config in experiments.items():
-                exp_dir = run_dir / "results" / model_name / exp_name
+                exp_dir = run_dir / "results" / sanitize_model_name(model_name) / exp_name
                 summary_path = exp_dir / "summary.json"
                 if summary_path.exists():
                     s = json.loads(summary_path.read_text())
@@ -2495,6 +2509,9 @@ def main():
                        help="Experiment type: v1 (general/math VQA) or v2 (finer perception/geometry splits)")
 
     # Re-grading mode
+    parser.add_argument("--layer_cuts", type=int, nargs=2, default=None, metavar=("CUT1", "CUT2"),
+                       help="Custom layer cuts for 3-way partition, e.g. --layer_cuts 8 20 for layers 0-7|8-19|20-27")
+
     parser.add_argument("--regrade", type=str, default=None, metavar="RUN_DIR",
                        help="Re-grade existing results with GPT (no inference needed). "
                             "Pass the run directory path, e.g. ./runs/eval_v1_mmr1")
@@ -2526,6 +2543,7 @@ def main():
         reuse_from=args.reuse_from,
         inference_timeout=args.inference_timeout,
         experiment_type=args.experiment_type,
+        layer_cuts=args.layer_cuts,
     )
 
     run_experiment(config)
